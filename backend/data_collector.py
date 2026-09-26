@@ -87,28 +87,37 @@ class DataCollector:
         try:
             vwap = df.ta.vwap(append=False)
             if vwap is not None:
-                col_vwap = next((c for c in vwap.columns if c.startswith('VWAP')), None)
-                if col_vwap: df['VWAP'] = vwap[col_vwap]
+                if isinstance(vwap, pd.Series):
+                    df['VWAP'] = vwap
+                else:
+                    col_vwap = next((c for c in vwap.columns if c.startswith('VWAP')), None)
+                    if col_vwap: df['VWAP'] = vwap[col_vwap]
         except Exception:
             pass # VWAP needs intraday data usually, fallback if fails
 
         # Stochastic RSI
         stochrsi = df.ta.stochrsi(length=14, rsi_length=14, k=3, d=3, append=False)
         if stochrsi is not None:
-            col_k = next((c for c in stochrsi.columns if c.startswith('STOCHRSIk')), None)
-            col_d = next((c for c in stochrsi.columns if c.startswith('STOCHRSId')), None)
-            if col_k: df['StochRSI_K'] = stochrsi[col_k]
-            if col_d: df['StochRSI_D'] = stochrsi[col_d]
+            if isinstance(stochrsi, pd.Series):
+                df['StochRSI_K'] = stochrsi
+            else:
+                col_k = next((c for c in stochrsi.columns if c.startswith('STOCHRSIk')), None)
+                col_d = next((c for c in stochrsi.columns if c.startswith('STOCHRSId')), None)
+                if col_k: df['StochRSI_K'] = stochrsi[col_k]
+                if col_d: df['StochRSI_D'] = stochrsi[col_d]
 
         # ADX
         adx = df.ta.adx(length=14, append=False)
         if adx is not None:
-            col_adx = next((c for c in adx.columns if c.startswith('ADX')), None)
-            col_dp = next((c for c in adx.columns if c.startswith('DMP')), None)
-            col_dn = next((c for c in adx.columns if c.startswith('DMN')), None)
-            if col_adx: df['ADX'] = adx[col_adx]
-            if col_dp: df['DI+'] = adx[col_dp]
-            if col_dn: df['DI-'] = adx[col_dn]
+            if isinstance(adx, pd.Series):
+                df['ADX'] = adx
+            else:
+                col_adx = next((c for c in adx.columns if c.startswith('ADX')), None)
+                col_dp = next((c for c in adx.columns if c.startswith('DMP')), None)
+                col_dn = next((c for c in adx.columns if c.startswith('DMN')), None)
+                if col_adx: df['ADX'] = adx[col_adx]
+                if col_dp: df['DI+'] = adx[col_dp]
+                if col_dn: df['DI-'] = adx[col_dn]
             
         # OBV
         try:
@@ -124,14 +133,20 @@ class DataCollector:
         # Williams %R
         willr = df.ta.willr(length=14, append=False)
         if willr is not None:
-            col_willr = next((c for c in willr.columns if c.startswith('WILLR')), None)
-            if col_willr: df['WILLR'] = willr[col_willr]
+            if isinstance(willr, pd.Series):
+                df['WILLR'] = willr
+            else:
+                col_willr = next((c for c in willr.columns if c.startswith('WILLR')), None)
+                if col_willr: df['WILLR'] = willr[col_willr]
             
         # CCI
         cci = df.ta.cci(length=20, append=False)
         if cci is not None:
-            col_cci = next((c for c in cci.columns if c.startswith('CCI')), None)
-            if col_cci: df['CCI'] = cci[col_cci]
+            if isinstance(cci, pd.Series):
+                df['CCI'] = cci
+            else:
+                col_cci = next((c for c in cci.columns if c.startswith('CCI')), None)
+                if col_cci: df['CCI'] = cci[col_cci]
 
         return df
 
