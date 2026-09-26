@@ -7,6 +7,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from backend.data_collector import DataCollector
 from backend.agent_core import TradingAgentCore
 from backend.portfolio import PortfolioManager
