@@ -10,6 +10,7 @@ load_dotenv()
 from backend.data_collector import DataCollector
 from backend.agent_core import TradingAgentCore
 from backend.portfolio import PortfolioManager
+from backend.auto_trader import AutoTrader
 
 app = FastAPI(title="Algo Trading Bot API", version="1.0")
 
@@ -25,7 +26,24 @@ app.add_middleware(
 # Initialize modules
 collector = DataCollector()
 agent_core = TradingAgentCore()
-portfolio = PortfolioManager()
+portfolio = PortfolioManager(initial_balance=30000.0)
+auto_trader = AutoTrader(collector, agent_core, portfolio)
+
+@app.get("/api/autotrade/status")
+def get_autotrade_status():
+    return auto_trader.status()
+
+@app.post("/api/autotrade/start")
+async def start_autotrade():
+    return await auto_trader.start()
+
+@app.post("/api/autotrade/stop")
+def stop_autotrade():
+    return auto_trader.stop()
+
+@app.get("/api/autotrade/logs")
+def get_autotrade_logs():
+    return {"logs": auto_trader.logs}
 
 @app.get("/")
 def read_root():

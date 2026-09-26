@@ -9,7 +9,7 @@ PORTFOLIO_FILE = os.path.join(data_dir, "portfolio.json")
 LOCK_FILE = PORTFOLIO_FILE + ".lock"
 
 class PortfolioManager:
-    def __init__(self, initial_balance: float = 500000.0): # Upgraded starting balance to 5 lakh
+    def __init__(self, initial_balance: float = 30000.0): # Set starting balance to 30k
         self.initial_balance = initial_balance
         self.lock = FileLock(LOCK_FILE, timeout=5)
         self.load_portfolio()
@@ -19,7 +19,13 @@ class PortfolioManager:
             "balance": self.initial_balance,
             "equity": self.initial_balance,
             "positions": [],
-            "history": []
+            "history": [],
+            "daily_stats": {
+                "date": datetime.today().strftime('%Y-%m-%d'),
+                "trades_taken": 0,
+                "sl_hits": 0,
+                "target_hits": 0
+            }
         }
 
     def load_portfolio(self):
@@ -108,11 +114,21 @@ class PortfolioManager:
                 "history": history[-10:] # last 10
             }
 
-    def execute_trade(self, ticker: str, action: str, qty: int, price: float, instrument="EQ", strike="None", is_short=False) -> dict:
+    def execute_trade(self, ticker: str, action: str, qty: int, price: float, instrument="EQ", strike="None", is_short=False, is_sl=False, is_target=False) -> dict:
         BROKERAGE = 20.0
         STT_RATE = 0.001 # approx
         
         with self.lock:
+            # Check date for daily stats reset
+            today_str = datetime.today().strftime('%Y-%m-%d')
+            if "daily_stats" not in self.data or self.data["daily_stats"]["date"] != today_str:
+                self.data["daily_stats"] = {
+                    "date": today_str,
+                    "trades_taken": 0,
+                    "sl_hits": 0,
+                    "target_hits": 0
+                }
+
             if action.upper() == "BUY":
                 if len(self.data["positions"]) >= 5:
                     return {"success": False, "message": "Max 5 open positions allowed for risk management."}
@@ -140,6 +156,7 @@ class PortfolioManager:
                         "is_short": is_short,
                         "timestamp": datetime.now().isoformat()
                     })
+                    self.data["daily_stats"]["trades_taken"] += 1
 
                 self.data["balance"] -= (cost + BROKERAGE)
                 self._save_raw()
@@ -167,6 +184,9 @@ class PortfolioManager:
                     self.data["positions"].remove(existing)
                 else:
                     existing["qty"] -= qty
+
+                if is_sl: self.data["daily_stats"]["sl_hits"] += 1
+                if is_target: self.data["daily_stats"]["target_hits"] += 1
 
                 # Update history
                 self.data["history"].append({
