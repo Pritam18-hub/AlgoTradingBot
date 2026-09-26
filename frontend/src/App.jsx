@@ -171,10 +171,7 @@ export default function App() {
   };
 
   const triggerAgentAnalysis = async () => {
-    if (!openaiKey) {
-      setError('Please provide an OpenAI API key in the header to run agent analysis.');
-      return;
-    }
+    // Frontend API Key is now optional. If blank, backend uses its secure environment variable.
     setAnalyzing(true);
     setError('');
     try {
@@ -343,7 +340,7 @@ export default function App() {
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>OpenAI API Key:</span>
           <input
             type="password"
-            placeholder="sk-proj-..."
+            placeholder="sk-proj-... (Optional if set in backend)"
             className="api-key-input"
             style={{ width: '220px' }}
             value={tempKey}
