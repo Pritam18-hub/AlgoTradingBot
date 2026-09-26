@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   TrendingUp, TrendingDown, Search, Cpu, Terminal, 
   Wallet, ShieldCheck, RefreshCw, AlertTriangle, Play 
-} from 'lucide-react';
+, Activity } from 'lucide-react';
 import StockChart from './components/Chart';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -323,6 +323,22 @@ export default function App() {
           <span className="logo-text">ANTIGRAVITY ALGO</span>
         </div>
 
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
+          <button 
+            onClick={() => setCurrentTab('manual')} 
+            className={currentTab === 'manual' ? 'btn-primary' : 'btn-secondary'}
+          >
+            Manual Analysis
+          </button>
+          <button 
+            onClick={() => setCurrentTab('auto')} 
+            className={currentTab === 'auto' ? 'btn-primary' : 'btn-secondary'}
+            style={{ display: 'flex', gap: '8px', alignItems: 'center' }}
+          >
+            <Activity size={16}/> Autonomous Bot {autoTrade.is_running && <span className="spinner" style={{width:'8px',height:'8px',background:'#10b981',borderRadius:'50%'}}></span>}
+          </button>
+        </div>
+
         <div className="api-key-container">
           <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>OpenAI API Key:</span>
           <input
@@ -366,6 +382,7 @@ export default function App() {
       </div>
 
       {/* 3. Main Workspace Area */}
+      {currentTab === 'manual' ? (
       <div className="main-workspace">
         {/* Left Panel: Search & Stats */}
         <div className="left-bar">
@@ -649,11 +666,6 @@ export default function App() {
             </div>
           )}
 
-
-
-            )}
-          </div>
-
           {/* Actionable Signal Card (Show if Lead approved and action is BUY or SELL) */}
           {!analyzing && analysisResult && analysisResult.lead_verification.approved && (
             analysisResult.lead_verification.final_action !== 'HOLD' ? (
@@ -717,7 +729,6 @@ export default function App() {
           )}
         </div>
       </div>
-      </>
     ) : (
       <div className="main-content" style={{ display: 'flex', flexDirection: 'column', padding: '20px', gap: '20px', overflowY: 'auto' }}>
         <div className="glass-panel" style={{ padding: '20px' }}>

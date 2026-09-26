@@ -25,6 +25,16 @@ class AutoTrader:
     async def start(self):
         if not self.is_running:
             self.is_running = True
+            
+            any_open = False
+            for t in self.tickers_to_monitor:
+                o, r = self._is_market_open(t)
+                if o: any_open = True
+            if not any_open:
+                self._add_log("Warning: All markets currently closed. Standing by for market open...")
+            else:
+                self._add_log("Autonomous engine activated. Scanning live markets...")
+                
             self.task = asyncio.create_task(self._trade_loop())
             return {"status": "started", "message": "Autonomous trading engine started."}
         return {"status": "already_running", "message": "Already running."}
@@ -56,6 +66,31 @@ class AutoTrader:
                 
             # Sleep for 5 minutes before next scan
             await asyncio.sleep(300)
+
+    def _is_market_open(self, ticker):
+        import pytz
+        tz = pytz.timezone('Asia/Kolkata')
+        now = datetime.now(tz)
+        
+        if now.weekday() >= 5: # Sat=5, Sun=6
+            return False, "Weekend (Market Closed)"
+            
+        current_time = now.time()
+        
+        if "CL=F" in ticker or "GC=F" in ticker:
+            # MCX Hours: 9 AM to 11:30 PM
+            m_open = datetime.strptime("09:00", "%H:%M").time()
+            m_close = datetime.strptime("23:30", "%H:%M").time()
+            if m_open <= current_time <= m_close:
+                return True, "Open"
+            return False, "Outside MCX Hours (09:00-23:30)"
+        else:
+            # NSE Hours: 9:15 AM to 3:30 PM
+            m_open = datetime.strptime("09:15", "%H:%M").time()
+            m_close = datetime.strptime("15:30", "%H:%M").time()
+            if m_open <= current_time <= m_close:
+                return True, "Open"
+            return False, "Outside NSE Hours (09:15-15:30)"
 
     async def _evaluate_markets(self):
         stats = self.portfolio.data.get("daily_stats", {})
@@ -107,6 +142,10 @@ class AutoTrader:
             return # Don't open more than 3 at once
             
         for ticker in self.tickers_to_monitor:
+            is_open, reason = self._is_market_open(ticker)
+            if not is_open:
+                continue
+
             # 1. Fetch data
             market_data = self.collector.get_comprehensive_data(ticker)
             if "error" in market_data:
